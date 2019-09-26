@@ -48,10 +48,11 @@ class GenusController extends Controller
         $em = $this->getDoctrine()->getManager();
 
         $genuses = $em->getRepository('AppBundle:Genus')
-            ->findAllPublishedOrderedBySize();
+            ->findAllPublishedOrderedByRecentlyActive();
+            #->findAllPublishedOrderedBySize();
 
         return $this->render('genus/list.html.twig', [
-            'genuses' => $genuses
+            'genuses' => $genuses,
         ]);
     }
 
@@ -83,11 +84,20 @@ class GenusController extends Controller
         }
         */
 
+        $recentNotes = $em->getRepository(GenusNote::class)
+            ->findAllRecentNotesForGenus($genus);
+        /*$recentNotes = $genus->getNotes()
+            ->filter(function(GenusNote $note){
+                return $note->getCreatedAt() > new \DateTime('-3 months');
+            });
+        */
+
         $this->get('logger')
             ->info('Showing genus: '.$genusName);
 
         return $this->render('genus/show.html.twig', array(
-            'genus' => $genus
+            'genus' => $genus,
+            'recentNoteCount' => count($recentNotes)
         ));
     }
 
@@ -110,7 +120,7 @@ class GenusController extends Controller
         }
 
         $data = [
-            'notes' => $notes
+            'notes' => $notes,
         ];
 
         return new JsonResponse($data);
